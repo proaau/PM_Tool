@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prognos PM Tool</title>
+    <title>Prognos Projektmanagement</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div>
         <p class="eyebrow">PROJEKTMANAGEMENT</p>
-        <h1 id="projectName">Prognos Zeitplaner</h1>
+        <h1 id="projectName">Prognos Projektmanagement</h1>
       </div>
       <div class="presence">
         <span id="presenceDot"></span>
@@ -24,7 +24,10 @@
         <label>Projekt auswählen
           <select id="projectSelect"></select>
         </label>
-        <button id="newProjectBtn" class="ghost">+ Neues Projekt</button>
+        <div class="inline-actions">
+          <button id="newProjectBtn" class="ghost">+ Neues Projekt</button>
+          <button id="deleteProjectBtn" class="ghost">Projekt löschen</button>
+        </div>
         <label>Projektname <input id="nameInput" /></label>
         <label>Beschreibung <textarea id="descInput" rows="3"></textarea></label>
         <button id="saveProjectBtn">Projekt speichern</button>
@@ -75,7 +78,16 @@
       </section>
 
       <section class="card full-width">
-        <h2>Zeitplan (Roadmap)</h2>
+        <div class="section-header">
+          <h2>Zeitplan (Roadmap)</h2>
+          <label>Ansicht
+            <select id="timelineViewSelect">
+              <option value="day">Tag</option>
+              <option value="week">Woche</option>
+              <option value="month">Monat</option>
+            </select>
+          </label>
+        </div>
         <div id="timeline" class="timeline"></div>
       </section>
     </main>

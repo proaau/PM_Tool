@@ -1,4 +1,4 @@
-# Prognos-inspiriertes Projektmanagement-Tool
+# Prognos Projektmanagement
 
 Ein leichtgewichtiges, kollaboratives PM-Tool mit Fokus auf:
 - **übersichtliche Zeitpläne (Roadmap/Gantt-ähnlich)**
@@ -6,15 +6,14 @@ Ein leichtgewichtiges, kollaboratives PM-Tool mit Fokus auf:
 - **gleichzeitige Bearbeitung über einen gemeinsamen Serverstand**
 
 ## Funktionen
-- Mehrere Projekte anlegen und zwischen Projekten wechseln
+- Mehrere Projekte anlegen, auswählen und löschen
 - Projektname und Beschreibung je Projekt pflegen
 - Aufgaben mit Titel, Verantwortlich, Start/Ende, Status, Priorität und Notizen projektbezogen anlegen/löschen
-- Roadmap-Ansicht als visuelle Zeitachsen-Balken
+- Roadmap-Ansicht als visuelle Zeitachsen-Balken mit Tag-/Woche-/Monat-Umschaltung
 - Kollaboration über zentralen Zustand (`/api/state`) mit Revisionskontrolle (Konflikterkennung)
 - Präsenzindikator für aktive Bearbeiter:innen
 
 ## Start (mit lokal installiertem Node.js)
-
 ```bash
 npm start
 ```

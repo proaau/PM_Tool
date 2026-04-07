@@ -1,18 +1,21 @@
 const state = {
   revision: 0,
   currentProjectId: null,
-  projects: []
+  projects: [],
+  timelineView: 'day'
 };
 
 const dom = {
   projectSelect: document.getElementById('projectSelect'),
   newProjectBtn: document.getElementById('newProjectBtn'),
+  deleteProjectBtn: document.getElementById('deleteProjectBtn'),
   nameInput: document.getElementById('nameInput'),
   descInput: document.getElementById('descInput'),
   saveProjectBtn: document.getElementById('saveProjectBtn'),
   taskForm: document.getElementById('taskForm'),
   taskBody: document.getElementById('taskBody'),
   timeline: document.getElementById('timeline'),
+  timelineViewSelect: document.getElementById('timelineViewSelect'),
   reloadBtn: document.getElementById('reloadBtn'),
   projectName: document.getElementById('projectName'),
   presenceText: document.getElementById('presenceText'),
@@ -58,7 +61,8 @@ function render() {
   }
 
   renderProjectSelector();
-  dom.projectName.textContent = currentProject.name || 'Prognos Zeitplaner';
+  dom.timelineViewSelect.value = state.timelineView;
+  dom.projectName.textContent = currentProject.name || 'Prognos Projektmanagement';
   dom.nameInput.value = currentProject.name;
   dom.descInput.value = currentProject.description;
 
@@ -78,6 +82,27 @@ function render() {
   renderTimeline(currentProject.tasks);
 }
 
+function getScaleConfig(mode) {
+  if (mode === 'week') {
+    return {
+      unitLabel: 'Wochen',
+      toUnit: (days) => Math.max(1, Math.round(days / 7))
+    };
+  }
+
+  if (mode === 'month') {
+    return {
+      unitLabel: 'Monate',
+      toUnit: (days) => Math.max(1, Math.round(days / 30))
+    };
+  }
+
+  return {
+    unitLabel: 'Tage',
+    toUnit: (days) => Math.max(1, Math.round(days))
+  };
+}
+
 function renderTimeline(tasksInput) {
   dom.timeline.innerHTML = '';
   const tasks = [...tasksInput].sort((a, b) => new Date(a.start) - new Date(b.start));
@@ -87,9 +112,15 @@ function renderTimeline(tasksInput) {
     return;
   }
 
+  const scale = getScaleConfig(state.timelineView);
   const minStart = new Date(Math.min(...tasks.map((t) => new Date(t.start))));
   const maxEnd = new Date(Math.max(...tasks.map((t) => new Date(t.due))));
-  const fullSpan = Math.max(1, Math.round((maxEnd - minStart) / 86400000));
+  const totalDays = Math.max(1, Math.round((maxEnd - minStart) / 86400000));
+  const fullSpan = Math.max(1, scale.toUnit(totalDays));
+
+  const info = document.createElement('p');
+  info.textContent = `Ansicht: ${scale.unitLabel}`;
+  dom.timeline.appendChild(info);
 
   for (const task of tasks) {
     const row = document.createElement('div');
@@ -100,8 +131,11 @@ function renderTimeline(tasksInput) {
     const track = document.createElement('div');
     track.className = 'bar-track';
 
-    const startOffset = Math.round((new Date(task.start) - minStart) / 86400000);
-    const duration = Math.max(1, Math.round((new Date(task.due) - new Date(task.start)) / 86400000) + 1);
+    const startDays = Math.round((new Date(task.start) - minStart) / 86400000);
+    const durationDays = Math.max(1, Math.round((new Date(task.due) - new Date(task.start)) / 86400000) + 1);
+
+    const startOffset = scale.toUnit(startDays);
+    const duration = scale.toUnit(durationDays);
 
     const bar = document.createElement('div');
     bar.className = 'bar';
@@ -175,6 +209,29 @@ async function createProject() {
   }
 }
 
+async function deleteCurrentProject() {
+  if (state.projects.length <= 1) {
+    alert('Mindestens ein Projekt muss vorhanden sein.');
+    return;
+  }
+
+  const currentProject = getCurrentProject();
+  if (!window.confirm(`Projekt "${currentProject.name}" wirklich löschen?`)) {
+    return;
+  }
+
+  state.projects = state.projects.filter((project) => project.id !== state.currentProjectId);
+  state.currentProjectId = state.projects[0].id;
+
+  try {
+    await saveState();
+    render();
+  } catch (error) {
+    alert(`${error.message}\nDie Daten werden neu geladen.`);
+    await loadState();
+  }
+}
+
 dom.projectSelect.addEventListener('change', async (event) => {
   state.currentProjectId = event.target.value;
 
@@ -187,7 +244,13 @@ dom.projectSelect.addEventListener('change', async (event) => {
   }
 });
 
+dom.timelineViewSelect.addEventListener('change', (event) => {
+  state.timelineView = event.target.value;
+  render();
+});
+
 dom.newProjectBtn.addEventListener('click', createProject);
+dom.deleteProjectBtn.addEventListener('click', deleteCurrentProject);
 
 dom.saveProjectBtn.addEventListener('click', async () => {
   const currentProject = getCurrentProject();
