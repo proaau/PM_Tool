@@ -14,6 +14,7 @@ Ein leichtgewichtiges, kollaboratives PM-Tool mit Fokus auf:
 - Präsenzindikator für aktive Bearbeiter:innen
 
 ## Start (mit lokal installiertem Node.js)
+
 ```bash
 npm start
 ```
