@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prognos PM Tool</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PROJEKTMANAGEMENT</p>
+        <h1 id="projectName">Prognos Zeitplaner</h1>
+      </div>
+      <div class="presence">
+        <span id="presenceDot"></span>
+        <span id="presenceText">Verbinde …</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card">
+        <h2>Projekt</h2>
+        <label>Projekt auswählen
+          <select id="projectSelect"></select>
+        </label>
+        <button id="newProjectBtn" class="ghost">+ Neues Projekt</button>
+        <label>Projektname <input id="nameInput" /></label>
+        <label>Beschreibung <textarea id="descInput" rows="3"></textarea></label>
+        <button id="saveProjectBtn">Projekt speichern</button>
+      </section>
+
+      <section class="card">
+        <h2>Aufgabe hinzufügen</h2>
+        <form id="taskForm" class="grid">
+          <label>Titel <input name="title" required /></label>
+          <label>Verantwortlich <input name="owner" required /></label>
+          <label>Start <input name="start" type="date" required /></label>
+          <label>Ende <input name="due" type="date" required /></label>
+          <label>Status
+            <select name="status">
+              <option>Offen</option>
+              <option>In Arbeit</option>
+              <option>Blockiert</option>
+              <option>Erledigt</option>
+            </select>
+          </label>
+          <label>Priorität
+            <select name="priority">
+              <option>Hoch</option>
+              <option>Mittel</option>
+              <option>Niedrig</option>
+            </select>
+          </label>
+          <label class="full">Notizen <textarea name="notes" rows="2"></textarea></label>
+          <button class="full" type="submit">Aufgabe anlegen</button>
+        </form>
+      </section>
+
+      <section class="card full-width">
+        <div class="section-header">
+          <h2>Aufgaben & Zuständigkeiten</h2>
+          <button id="reloadBtn" class="ghost">Neu laden</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Titel</th><th>Verantwortlich</th><th>Start</th><th>Ende</th><th>Status</th><th>Priorität</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="taskBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card full-width">
+        <h2>Zeitplan (Roadmap)</h2>
+        <div id="timeline" class="timeline"></div>
+      </section>
+    </main>
+
+    <template id="taskRowTemplate">
+      <tr>
+        <td class="title"></td>
+        <td class="owner"></td>
+        <td class="start"></td>
+        <td class="due"></td>
+        <td class="status"></td>
+        <td class="priority"></td>
+        <td><button class="delete ghost">Löschen</button></td>
+      </tr>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
