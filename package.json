@@ -1,0 +1,11 @@
+{
+  "name": "pm-tool",
+  "version": "1.0.0",
+  "description": "Kollaboratives Projektmanagement-Tool mit Zeitplan-Ansicht",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "license": "MIT"
+}
