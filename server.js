@@ -6,34 +6,40 @@ const { randomUUID } = require('crypto');
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
+const starterProjectId = randomUUID();
+
 const sharedState = {
   revision: 1,
-  project: {
-    name: 'Programmmanagement 2026',
-    description: 'Gemeinsamer, klar strukturierter Zeitplan mit Aufgaben und Zuständigkeiten.',
-    tasks: [
-      {
-        id: randomUUID(),
-        title: 'Kick-off & Scope',
-        owner: 'Projektleitung',
-        start: '2026-04-08',
-        due: '2026-04-14',
-        status: 'In Arbeit',
-        priority: 'Hoch',
-        notes: 'Ziele, Stakeholder und Milestones abstimmen.'
-      },
-      {
-        id: randomUUID(),
-        title: 'Anforderungen validieren',
-        owner: 'Business Analyse',
-        start: '2026-04-15',
-        due: '2026-04-25',
-        status: 'Offen',
-        priority: 'Mittel',
-        notes: 'Workshops mit Fachbereichen durchführen.'
-      }
-    ]
-  },
+  currentProjectId: starterProjectId,
+  projects: [
+    {
+      id: starterProjectId,
+      name: 'Programmmanagement 2026',
+      description: 'Gemeinsamer, klar strukturierter Zeitplan mit Aufgaben und Zuständigkeiten.',
+      tasks: [
+        {
+          id: randomUUID(),
+          title: 'Kick-off & Scope',
+          owner: 'Projektleitung',
+          start: '2026-04-08',
+          due: '2026-04-14',
+          status: 'In Arbeit',
+          priority: 'Hoch',
+          notes: 'Ziele, Stakeholder und Milestones abstimmen.'
+        },
+        {
+          id: randomUUID(),
+          title: 'Anforderungen validieren',
+          owner: 'Business Analyse',
+          start: '2026-04-15',
+          due: '2026-04-25',
+          status: 'Offen',
+          priority: 'Mittel',
+          notes: 'Workshops mit Fachbereichen durchführen.'
+        }
+      ]
+    }
+  ],
   updatedAt: new Date().toISOString()
 };
 
@@ -104,6 +110,25 @@ function serveStatic(req, res) {
   });
 }
 
+function isValidState(payload) {
+  if (!Array.isArray(payload.projects) || payload.projects.length === 0) {
+    return false;
+  }
+
+  if (!payload.currentProjectId || !payload.projects.some((project) => project.id === payload.currentProjectId)) {
+    return false;
+  }
+
+  return payload.projects.every(
+    (project) =>
+      project &&
+      typeof project.id === 'string' &&
+      typeof project.name === 'string' &&
+      typeof project.description === 'string' &&
+      Array.isArray(project.tasks)
+  );
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url.startsWith('/api/state')) {
@@ -116,7 +141,7 @@ const server = http.createServer(async (req, res) => {
         const body = await readBody(req);
         const payload = JSON.parse(body || '{}');
 
-        if (!payload.project || !Array.isArray(payload.project.tasks)) {
+        if (!isValidState(payload)) {
           sendJson(res, 400, { error: 'Ungültiges Projektformat.' });
           return;
         }
@@ -129,7 +154,8 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        sharedState.project = payload.project;
+        sharedState.projects = payload.projects;
+        sharedState.currentProjectId = payload.currentProjectId;
         sharedState.revision += 1;
         sharedState.updatedAt = new Date().toISOString();
 

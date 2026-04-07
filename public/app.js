@@ -1,9 +1,12 @@
 const state = {
   revision: 0,
-  project: { name: '', description: '', tasks: [] }
+  currentProjectId: null,
+  projects: []
 };
 
 const dom = {
+  projectSelect: document.getElementById('projectSelect'),
+  newProjectBtn: document.getElementById('newProjectBtn'),
   nameInput: document.getElementById('nameInput'),
   descInput: document.getElementById('descInput'),
   saveProjectBtn: document.getElementById('saveProjectBtn'),
@@ -20,6 +23,10 @@ const dom = {
 const sessionId = crypto.randomUUID();
 const userName = window.prompt('Name für die gemeinsame Bearbeitung:', 'Teammitglied') || 'Teammitglied';
 
+function getCurrentProject() {
+  return state.projects.find((project) => project.id === state.currentProjectId) || null;
+}
+
 async function api(path, options = {}) {
   const res = await fetch(path, {
     headers: { 'Content-Type': 'application/json' },
@@ -33,13 +40,30 @@ async function api(path, options = {}) {
   return data;
 }
 
+function renderProjectSelector() {
+  dom.projectSelect.innerHTML = '';
+  for (const project of state.projects) {
+    const option = document.createElement('option');
+    option.value = project.id;
+    option.textContent = project.name || '(ohne Namen)';
+    dom.projectSelect.appendChild(option);
+  }
+  dom.projectSelect.value = state.currentProjectId;
+}
+
 function render() {
-  dom.projectName.textContent = state.project.name || 'Prognos Zeitplaner';
-  dom.nameInput.value = state.project.name;
-  dom.descInput.value = state.project.description;
+  const currentProject = getCurrentProject();
+  if (!currentProject) {
+    return;
+  }
+
+  renderProjectSelector();
+  dom.projectName.textContent = currentProject.name || 'Prognos Zeitplaner';
+  dom.nameInput.value = currentProject.name;
+  dom.descInput.value = currentProject.description;
 
   dom.taskBody.innerHTML = '';
-  for (const task of state.project.tasks) {
+  for (const task of currentProject.tasks) {
     const row = dom.taskRowTemplate.content.cloneNode(true);
     row.querySelector('.title').textContent = task.title;
     row.querySelector('.owner').textContent = task.owner;
@@ -51,12 +75,12 @@ function render() {
     dom.taskBody.appendChild(row);
   }
 
-  renderTimeline();
+  renderTimeline(currentProject.tasks);
 }
 
-function renderTimeline() {
+function renderTimeline(tasksInput) {
   dom.timeline.innerHTML = '';
-  const tasks = [...state.project.tasks].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const tasks = [...tasksInput].sort((a, b) => new Date(a.start) - new Date(b.start));
 
   if (tasks.length === 0) {
     dom.timeline.innerHTML = '<p>Noch keine Aufgaben vorhanden.</p>';
@@ -94,14 +118,16 @@ function renderTimeline() {
 async function loadState() {
   const serverState = await api('/api/state');
   state.revision = serverState.revision;
-  state.project = serverState.project;
+  state.currentProjectId = serverState.currentProjectId;
+  state.projects = serverState.projects;
   render();
 }
 
 async function saveState() {
   const payload = {
     baseRevision: state.revision,
-    project: state.project
+    currentProjectId: state.currentProjectId,
+    projects: state.projects
   };
 
   const result = await api('/api/state', {
@@ -113,7 +139,8 @@ async function saveState() {
 }
 
 async function removeTask(taskId) {
-  state.project.tasks = state.project.tasks.filter((task) => task.id !== taskId);
+  const currentProject = getCurrentProject();
+  currentProject.tasks = currentProject.tasks.filter((task) => task.id !== taskId);
   try {
     await saveState();
     render();
@@ -123,9 +150,49 @@ async function removeTask(taskId) {
   }
 }
 
+async function createProject() {
+  const name = window.prompt('Name des neuen Projekts:', 'Neues Projekt');
+  if (!name) {
+    return;
+  }
+
+  const project = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    description: '',
+    tasks: []
+  };
+
+  state.projects.push(project);
+  state.currentProjectId = project.id;
+
+  try {
+    await saveState();
+    render();
+  } catch (error) {
+    alert(`${error.message}\nDie Daten werden neu geladen.`);
+    await loadState();
+  }
+}
+
+dom.projectSelect.addEventListener('change', async (event) => {
+  state.currentProjectId = event.target.value;
+
+  try {
+    await saveState();
+    render();
+  } catch (error) {
+    alert(`${error.message}\nDie Daten werden neu geladen.`);
+    await loadState();
+  }
+});
+
+dom.newProjectBtn.addEventListener('click', createProject);
+
 dom.saveProjectBtn.addEventListener('click', async () => {
-  state.project.name = dom.nameInput.value.trim();
-  state.project.description = dom.descInput.value.trim();
+  const currentProject = getCurrentProject();
+  currentProject.name = dom.nameInput.value.trim();
+  currentProject.description = dom.descInput.value.trim();
 
   try {
     await saveState();
@@ -149,7 +216,8 @@ dom.taskForm.addEventListener('submit', async (event) => {
     notes: formData.get('notes').toString().trim()
   };
 
-  state.project.tasks.push(task);
+  const currentProject = getCurrentProject();
+  currentProject.tasks.push(task);
 
   try {
     await saveState();
